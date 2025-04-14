@@ -80,8 +80,101 @@ Stack *createStack(int capacity) {
     stack->capacity = capacity;
     stack->items = malloc(capacity * sizeof(int));
     if (!stack->items) {
-                    fprintf(stderr, "Eroare la alocarea memoriei pentru elementele stivei.\n");
-                    exit(EXIT_FAILURE);
-                }
-            return stack;
+        fprintf(stderr, "Eroare la alocarea memoriei pentru elementele stivei.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    return stack;
+}
+
+// Adaugă element în stivă
+void push(Stack *stack, int value) {
+    if (stack->top < stack->capacity - 1) {
+        stack->items[++stack->top] = value;
+    }
+}
+
+// Resetează vectorul de vizite
+void resetVisited(Graph *graph) {
+    for (int i = 0; i < graph->numVertices; i++) {
+        graph->visited[i] = 0;
+    }
+}
+
+// DFS recursiv
+void depthFirstSearch(Graph *graph, Stack *stack, int startVertex) {
+    graph->visited[startVertex] = 1;
+    printf("%d ", startVertex);
+    push(stack, startVertex);
+
+    Node *adj = graph->adjLists[startVertex];
+    while (adj != NULL) {
+        int connectedVertex = adj->value;
+        if (!graph->visited[connectedVertex]) {
+            depthFirstSearch(graph, stack, connectedVertex);
         }
+        adj = adj->next;
+    }
+}
+
+// Citește muchiile
+void readEdges(Graph *graph, int edgeCount) {
+    printf("Introduceți %d muchii (perechi de noduri între 0 și %d):\n", edgeCount, graph->numVertices - 1);
+    for (int i = 0; i < edgeCount; i++) {
+        int src, dest;
+        scanf("%d %d", &src, &dest);
+        addEdge(graph, src, dest);
+    }
+}
+
+// Eliberează memoria grafului
+void freeGraph(Graph *graph) {
+    for (int i = 0; i < graph->numVertices; i++) {
+        Node *temp = graph->adjLists[i];
+        while (temp != NULL) {
+            Node *next = temp->next;
+            free(temp);
+            temp = next;
+        }
+    }
+    free(graph->adjLists);
+    free(graph->visited);
+    free(graph);
+}
+
+// Eliberează memoria stivei
+void freeStack(Stack *stack) {
+    free(stack->items);
+    free(stack);
+}
+
+// Funcție principală
+int main() {
+    int numVertices, numEdges;
+
+    printf("Numărul de noduri: ");
+    if (scanf("%d", &numVertices) != 1 || numVertices <= 0) {
+        fprintf(stderr, "Eroare: Introduceți un număr valid de noduri.\n");
+        return EXIT_FAILURE;
+    }
+
+    printf("Numărul de muchii: ");
+    if (scanf("%d", &numEdges) != 1 || numEdges < 0) {
+        fprintf(stderr, "Eroare: Introduceți un număr valid de muchii.\n");
+        return EXIT_FAILURE;
+    }
+
+    Graph *graph = createGraph(numVertices);
+    Stack *dfsStack = createStack(2 * numVertices);
+
+    readEdges(graph, numEdges);
+
+    printf("Parcurgere DFS de la nodul 0:\n");
+    depthFirstSearch(graph, dfsStack, 0);
+    printf("\n");
+
+    freeGraph(graph);
+    freeStack(dfsStack);
+
+    return 0;
+}
